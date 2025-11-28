@@ -2,7 +2,7 @@ package com.loopers.infrastructure.product;
 
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductRepository;
-import com.loopers.domain.product.ProductSortType;
+import com.loopers.domain.product.ProductSearchCondition;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
@@ -29,16 +29,20 @@ public class ProductRepositoryImpl implements ProductRepository {
     }
 
     @Override
-    public List<Product> findAllBySortType(ProductSortType sortType) {
-        return switch (sortType) {
-            case latest -> productJpaRepository.findAllByOrderByCreatedAtDesc();
-            case price_asc -> productJpaRepository.findAllByOrderByPriceAmountAsc();
-            case likes_desc -> productJpaRepository.findAllByOrderByLikeCountDesc(); //like entity 구현 후에 @Query 사용해서 정렬 진행해야 함.
-        };
+    public Optional<Product> findByIdForUpdate(Long id) {
+        return productJpaRepository.findByIdForUpdate(id);
     }
 
     @Override
-    public Optional<Product> findByIdForUpdate(Long id) {
-        return productJpaRepository.findByIdForUpdate(id);
+    public List<ProductListView> findListViewByCondition(ProductSearchCondition condition) {
+        int limit = condition.size();
+        int offset = condition.page() * condition.size();
+        Long brandId = condition.brandId();
+
+        return switch (condition.sortType()) {
+            case PRICE_ASC -> productJpaRepository.findListPriceAsc(brandId, limit, offset);
+            case LIKE_DESC -> productJpaRepository.findListLikesDesc(brandId, limit, offset);
+            case LATEST -> productJpaRepository.findListLatest(brandId, limit, offset);
+        };
     }
 }

@@ -3,7 +3,6 @@ package com.loopers.interfaces.api.product;
 import com.loopers.domain.product.ProductInfo;
 
 import java.math.BigDecimal;
-import java.util.List;
 
 public class ProductV1Dto {
     public record ProductResponse(
@@ -27,14 +26,11 @@ public class ProductV1Dto {
     }
 
     public record ProductListItem(
-        Long id,
-        String name,
-        BigDecimal priceAmount,
-        Integer stockQuantity,
-        Long likeCount
-    ) {}
-
-    public record ProductListResponse(
-        List<ProductListItem> items
+            Long id,
+            String name,
+            BigDecimal priceAmount,
+            String brandName,
+            Integer stockQuantity,
+            Long likeCount
     ) {}
 }
