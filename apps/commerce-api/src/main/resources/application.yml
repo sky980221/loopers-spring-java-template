@@ -16,7 +16,7 @@ spring:
   application:
     name: commerce-api
   profiles:
-    active: local
+    active: local,data
   config:
     import:
       - jpa.yml
@@ -52,6 +52,14 @@ spring:
   config:
     activate:
       on-profile: prd
+
+---
+spring:
+  config:
+    activate:
+      on-profile: data
+seed:
+  enabled: true
 
 springdoc:
   api-docs:
