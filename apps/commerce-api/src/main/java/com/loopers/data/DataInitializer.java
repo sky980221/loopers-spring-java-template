@@ -1,5 +1,7 @@
 package com.loopers.data;
 
+import com.loopers.domain.brand.Brand;
+import com.loopers.domain.brand.BrandRepository;
 import com.loopers.domain.product.Money;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductRepository;
@@ -28,6 +30,7 @@ import java.util.List;
 public class DataInitializer implements CommandLineRunner {
 
     private final ProductRepository productRepository;
+    private final BrandRepository brandRepository;
 
     @Override
     @Transactional
@@ -37,6 +40,11 @@ public class DataInitializer implements CommandLineRunner {
         if (!existing.isEmpty()) {
             return;
         }
+
+        // 기본 브랜드 3개를 선행 생성
+        brandRepository.save(Brand.builder().name("나이키").build());
+        brandRepository.save(Brand.builder().name("퓨마").build());
+        brandRepository.save(Brand.builder().name("아디다스").build());
 
         ClassPathResource resource = new ClassPathResource("ProductList.csv");
         if (!resource.exists()) {
