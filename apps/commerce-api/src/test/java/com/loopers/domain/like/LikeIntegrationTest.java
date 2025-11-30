@@ -3,7 +3,6 @@ package com.loopers.domain.like;
 import com.loopers.domain.product.Money;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.Stock;
-import com.loopers.infrastructure.like.LikeJpaRepository;
 import com.loopers.infrastructure.product.ProductJpaRepository;
 import com.loopers.utils.DatabaseCleanUp;
 import org.junit.jupiter.api.AfterEach;
@@ -26,8 +25,6 @@ class LikeIntegrationTest {
 
     @Autowired
     private LikeService likeService;
-    @Autowired
-    private LikeJpaRepository likeJpaRepository;
     @Autowired
     private ProductJpaRepository productJpaRepository;
     @Autowired
@@ -76,9 +73,7 @@ class LikeIntegrationTest {
 
         // then
         Product reloaded = productJpaRepository.findById(productId).orElseThrow();
-        Long countInTable = likeJpaRepository.countByProductId(productId);
         assertThat(reloaded.getLikeCount()).isEqualTo(users);
-        assertThat(countInTable).isEqualTo((long) users);
     }
 
     @Test
@@ -111,9 +106,7 @@ class LikeIntegrationTest {
 
         // then
         Product reloaded = productJpaRepository.findById(productId).orElseThrow();
-        Long countInTable = likeJpaRepository.countByProductId(productId);
         assertThat(reloaded.getLikeCount()).isEqualTo(0L);
-        assertThat(countInTable).isEqualTo(0L);
     }
 
     private static void await(CountDownLatch latch) {

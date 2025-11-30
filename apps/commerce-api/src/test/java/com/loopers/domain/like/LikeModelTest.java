@@ -1,19 +1,21 @@
 package com.loopers.domain.like;
 
+import com.loopers.domain.product.Money;
+import com.loopers.domain.product.Product;
+import com.loopers.domain.product.ProductRepository;
+import com.loopers.domain.product.Stock;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.dao.DataIntegrityViolationException;
 
+import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
-import static org.junit.jupiter.api.Assertions.assertDoesNotThrow;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.*;
@@ -23,6 +25,8 @@ class LikeModelTest {
 
     @Mock
     LikeRepository likeRepository;
+    @Mock
+    ProductRepository productRepository;
 
     @InjectMocks
     LikeService likeService;
@@ -36,6 +40,15 @@ class LikeModelTest {
     void like_registers_when_absent() {
         // given
         when(likeRepository.findByUserIdAndProductId(USER_ID, PRODUCT_ID)).thenReturn(Optional.empty());
+        Product product = Product.builder()
+                .brandId(1L)
+                .name("P1")
+                .price(new Money(BigDecimal.valueOf(1000)))
+                .stockQuantity(new Stock(10))
+                .likeCount(0L)
+                .build();
+        when(productRepository.findByIdForUpdate(PRODUCT_ID)).thenReturn(Optional.of(product));
+        when(productRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         // when
         likeService.likeProduct(USER_ID, PRODUCT_ID);
@@ -45,6 +58,8 @@ class LikeModelTest {
                 like.getUserId().equals(USER_ID) &&
                         like.getProductId().equals(PRODUCT_ID)
         ));
+        verify(productRepository, times(1)).save(eq(product));
+        assertThat(product.getLikeCount()).isEqualTo(1L);
 
     }
 
@@ -54,12 +69,22 @@ class LikeModelTest {
         // given
         when(likeRepository.findByUserIdAndProductId(USER_ID, PRODUCT_ID))
                 .thenReturn(Optional.of(new Like(USER_ID, PRODUCT_ID)));
+        Product product = Product.builder()
+                .brandId(1L)
+                .name("P1")
+                .price(new Money(BigDecimal.valueOf(1000)))
+                .stockQuantity(new Stock(10))
+                .likeCount(0L)
+                .build();
+        when(productRepository.findByIdForUpdate(PRODUCT_ID)).thenReturn(Optional.of(product));
 
         // when
         likeService.likeProduct(USER_ID, PRODUCT_ID);
 
         // then
         verify(likeRepository, never()).save(any());
+        verify(productRepository, never()).save(any());
+        assertThat(product.getLikeCount()).isEqualTo(0L);
     }
 
     @Test
@@ -69,28 +94,48 @@ class LikeModelTest {
         Like like = new Like(USER_ID, PRODUCT_ID);
         when(likeRepository.findByUserIdAndProductId(USER_ID, PRODUCT_ID))
                 .thenReturn(Optional.of(like));
+        Product product = Product.builder()
+                .brandId(1L)
+                .name("P1")
+                .price(new Money(BigDecimal.valueOf(1000)))
+                .stockQuantity(new Stock(10))
+                .likeCount(1L)
+                .build();
+        when(productRepository.findByIdForUpdate(PRODUCT_ID)).thenReturn(Optional.of(product));
+        when(productRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
 
         // when
         likeService.cancleLikeProduct(USER_ID, PRODUCT_ID);
 
         // then
         verify(likeRepository, times(1)).delete(eq(like));
+        verify(productRepository, times(1)).save(eq(product));
+        assertThat(product.getLikeCount()).isEqualTo(0L);
     }
 
     @Test
-    @DisplayName("상품별 좋아요 수를 카운트로 조회할 수 있다")
-    void count_by_product() {
+    @DisplayName("좋아요/취소 동작은 Product.likeCount에 반영된다")
+    void like_and_unlike_update_product_like_count() {
         // given
-        when(likeRepository.countByProductId(1L)).thenReturn(10000L);
-        when(likeRepository.countByProductId(2L)).thenReturn(20000L);
+        Product product = Product.builder()
+                .brandId(1L)
+                .name("P1")
+                .price(new Money(BigDecimal.valueOf(1000)))
+                .stockQuantity(new Stock(10))
+                .likeCount(0L)
+                .build();
+        when(productRepository.findByIdForUpdate(PRODUCT_ID)).thenReturn(Optional.of(product));
+        when(productRepository.save(any())).thenAnswer(invocation -> invocation.getArgument(0));
+        when(likeRepository.findByUserIdAndProductId(USER_ID, PRODUCT_ID))
+                .thenReturn(Optional.empty()) // for like
+                .thenReturn(Optional.of(new Like(USER_ID, PRODUCT_ID))); // for cancel
 
         // when
-        Long c1 = likeService.getLikeCount(1L);
-        Long c2 = likeService.getLikeCount(2L);
+        likeService.likeProduct(USER_ID, PRODUCT_ID);
+        likeService.cancleLikeProduct(USER_ID, PRODUCT_ID);
 
         // then
-        assertThat(c1).isEqualTo(10000L);
-        assertThat(c2).isEqualTo(20000L);
+        assertThat(product.getLikeCount()).isEqualTo(0L);
     }
 
     @Test
