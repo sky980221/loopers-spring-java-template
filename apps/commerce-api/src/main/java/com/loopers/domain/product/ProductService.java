@@ -29,7 +29,7 @@ public class ProductService {
         String brandName = brandRepository.findById(product.getBrandId())
                 .map(Brand::getName)
                 .orElse(null);
-        long likeCount = likeRepository.countByProductId(product.getId());
+        long likeCount = product.getLikeCount();
 
         return new ProductInfo(
                 product.getId(),
