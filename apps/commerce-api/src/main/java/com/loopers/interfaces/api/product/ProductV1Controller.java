@@ -2,7 +2,6 @@ package com.loopers.interfaces.api.product;
 
 import com.loopers.application.product.ProductFacade;
 import com.loopers.domain.product.ProductSearchCondition;
-import com.loopers.domain.product.ProductService;
 import com.loopers.interfaces.api.ApiResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -14,7 +13,6 @@ import java.util.List;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/products")
 public class ProductV1Controller {
-    private final ProductService productService;
     private final ProductFacade productFacade;
 
     @GetMapping("")
@@ -26,8 +24,7 @@ public class ProductV1Controller {
     ) {
         ProductSearchCondition condition = new ProductSearchCondition(brandId, sortType, page, size);
 
-        var views = productFacade.getProductList(condition);
-        var items = views.stream()
+        var items = productFacade.getProductList(condition).stream()
                 .map(v -> new ProductV1Dto.ProductListItem(
                         v.getId(),
                         v.getName(),
@@ -45,7 +42,7 @@ public class ProductV1Controller {
     public ApiResponse<ProductV1Dto.ProductResponse> getProduct(
         @PathVariable("productId") Long productId
     ) {
-        var info = productService.getProductDetail(productId);
+        var info = productFacade.getProductDetail(productId);
         return ApiResponse.success(ProductV1Dto.ProductResponse.from(info));
     }
 }

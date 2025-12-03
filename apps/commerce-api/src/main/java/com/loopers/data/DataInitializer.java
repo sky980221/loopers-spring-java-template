@@ -35,7 +35,7 @@ public class DataInitializer implements CommandLineRunner {
     @Override
     @Transactional
     public void run(String... args) throws Exception {
-        final int targetCount = 1000;
+        final int targetCount = 500000;
         List<Product> existing = productRepository.findAll();
         if (!existing.isEmpty()) {
             return;

@@ -1,7 +1,5 @@
 package com.loopers.domain.product;
 
-import lombok.Getter;
-import org.springframework.data.domain.Sort;
 
 public record ProductSearchCondition(
         Long brandId,
@@ -13,13 +11,16 @@ public record ProductSearchCondition(
         LATEST,
         PRICE_ASC,
         LIKE_DESC;
+    }
 
-        public Sort toSort() {
-            return switch (this) {
-                case LATEST -> Sort.by(Sort.Direction.DESC, "id");
-                case PRICE_ASC -> Sort.by(Sort.Direction.ASC, "price.amount");
-                case LIKE_DESC -> Sort.by(Sort.Direction.DESC, "likeCount");
-            };
-        }
+    /**
+     * 캐시 키 생성 규칙
+     * 예: brand:10:sort:PRICE_ASC:p:1:s:20
+     */
+    public String cacheKey() {
+        return "brand:" + (brandId != null ? brandId : "ALL")
+                + ":sort:" + sortType
+                + ":p:" + page
+                + ":s:" + size;
     }
 }

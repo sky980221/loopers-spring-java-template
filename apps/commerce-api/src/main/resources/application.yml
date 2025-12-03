@@ -16,7 +16,7 @@ spring:
   application:
     name: commerce-api
   profiles:
-    active: local,data
+    active: local
   config:
     import:
       - jpa.yml
