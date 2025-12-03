@@ -11,6 +11,7 @@ import org.springframework.data.redis.connection.RedisStaticMasterReplicaConfigu
 import org.springframework.data.redis.connection.lettuce.LettuceClientConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
 import java.util.List;
@@ -66,6 +67,19 @@ public class RedisConfig{
     ) {
         RedisTemplate<String, String> redisTemplate = new RedisTemplate<>();
         return defaultRedisTemplate(redisTemplate, lettuceConnectionFactory);
+    }
+
+    @Bean(name = "jsonRedisTemplate")
+    public RedisTemplate<String, Object> jsonRedisTemplate(LettuceConnectionFactory lettuceConnectionFactory) {
+        RedisTemplate<String, Object> template = new RedisTemplate<>();
+        StringRedisSerializer keySerializer = new StringRedisSerializer();
+        GenericJackson2JsonRedisSerializer valueSerializer = new GenericJackson2JsonRedisSerializer();
+        template.setKeySerializer(keySerializer);
+        template.setHashKeySerializer(keySerializer);
+        template.setValueSerializer(valueSerializer);
+        template.setHashValueSerializer(valueSerializer);
+        template.setConnectionFactory(lettuceConnectionFactory);
+        return template;
     }
 
 

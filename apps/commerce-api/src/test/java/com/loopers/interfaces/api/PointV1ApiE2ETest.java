@@ -63,16 +63,17 @@ public class PointV1ApiE2ETest {
         headers.add("X-USER-ID", userId);
         HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
 
-        ResponseEntity<ApiResponse<Long>> response = testRestTemplate.exchange(
+        ResponseEntity<ApiResponse<BigDecimal>> response = testRestTemplate.exchange(
                 "/api/v1/points",
                 HttpMethod.GET,
                 httpEntity,
-                new ParameterizedTypeReference<ApiResponse<Long>>() {}
+                new ParameterizedTypeReference<ApiResponse<BigDecimal>>() {}
         );
         
         //then
         assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK);
-        assertThat(response.getBody().data()).isEqualTo(expectedPointAmount);
+        assertThat(response.getBody().data().compareTo(expectedPointAmount))
+                .isZero();
     }
 
     @DisplayName("X-USER-ID 헤더가 없을 경우, 400 Bad Request 응답을 반환한다.")
@@ -81,11 +82,11 @@ public class PointV1ApiE2ETest {
         //given
 
         //when
-        ResponseEntity<ApiResponse<Long>> response = testRestTemplate.exchange(
+        ResponseEntity<ApiResponse<BigDecimal>> response = testRestTemplate.exchange(
                 "/api/v1/points",
                 HttpMethod.GET,
                 null,
-                new ParameterizedTypeReference<ApiResponse<Long>>() {}
+                new ParameterizedTypeReference<ApiResponse<BigDecimal>>() {}
         );
 
         //then
@@ -112,17 +113,17 @@ public class PointV1ApiE2ETest {
         headers.add("X-USER-ID", userId);
         HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
 
-        ResponseEntity<ApiResponse<Long>> response = testRestTemplate.exchange(
+        ResponseEntity<ApiResponse<BigDecimal>> response = testRestTemplate.exchange(
                 "/api/v1/points/charge?amount=" + chargeAmount,
                 HttpMethod.POST,
                 httpEntity,
-                new ParameterizedTypeReference<ApiResponse<Long>>() {}
+                new ParameterizedTypeReference<ApiResponse<BigDecimal>>() {}
         );
 
         //then
         assertAll(
                 () -> assertThat(response.getStatusCode()).isEqualTo(HttpStatus.OK),
-                () -> assertThat(response.getBody().data()).isEqualTo(6000)
+                () -> assertThat(response.getBody().data()).isEqualTo(BigDecimal.valueOf(6000L))
         );
     }
 
@@ -139,11 +140,11 @@ public class PointV1ApiE2ETest {
         headers.add("X-USER-ID", userId);
         HttpEntity<Void> httpEntity = new HttpEntity<>(headers);
 
-        ResponseEntity<ApiResponse<Long>> response = testRestTemplate.exchange(
+        ResponseEntity<ApiResponse<BigDecimal>> response = testRestTemplate.exchange(
                 "/api/v1/points/charge?amount=" + chargeAmount,
                 HttpMethod.POST,
                 httpEntity,
-                new ParameterizedTypeReference<ApiResponse<Long>>() {}
+                new ParameterizedTypeReference<ApiResponse<BigDecimal>>() {}
         );
 
         //then

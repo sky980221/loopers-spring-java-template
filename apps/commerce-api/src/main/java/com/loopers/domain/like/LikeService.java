@@ -46,11 +46,6 @@ public class LikeService {
     }
 
     @Transactional(readOnly = true)
-    public Long getLikeCount(Long productId){
-        return likeRepository.countByProductId(productId);
-    }
-
-    @Transactional(readOnly = true)
     public List<Like> getUserLikeProduct(String userId){
         return likeRepository.findAllByUserId(userId);
     }

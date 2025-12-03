@@ -53,6 +53,15 @@ spring:
     activate:
       on-profile: prd
 
+---
+spring:
+  config:
+    activate:
+      on-profile: data
+seed:
+  enabled: true
+
 springdoc:
-  api-docs:
-    enabled: false
+  use-fqn: true
+  swagger-ui:
+    path: /swagger-ui.html
