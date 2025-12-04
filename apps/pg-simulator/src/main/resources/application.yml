@@ -23,8 +23,11 @@ spring:
       - redis.yml
       - logging.yml
       - monitoring.yml
-pg:
-  base-url: http://localhost:8082
+
+datasource:
+  mysql-jpa:
+    main:
+      jdbc-url: jdbc:mysql://localhost:3306/paymentgateway
 
 springdoc:
   use-fqn: true
@@ -37,11 +40,25 @@ spring:
     activate:
       on-profile: local, test
 
+server:
+  port: 8082
+
+management:
+  server:
+    port: 8083
+
 ---
 spring:
   config:
     activate:
       on-profile: dev
+
+server:
+  port: 8082
+
+management:
+  server:
+    port: 8083
 
 ---
 spring:
@@ -55,15 +72,6 @@ spring:
     activate:
       on-profile: prd
 
----
-spring:
-  config:
-    activate:
-      on-profile: data
-seed:
-  enabled: true
-
 springdoc:
-  use-fqn: true
-  swagger-ui:
-    path: /swagger-ui.html
+  api-docs:
+    enabled: false
