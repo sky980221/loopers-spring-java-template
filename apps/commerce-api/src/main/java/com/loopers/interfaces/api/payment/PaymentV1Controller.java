@@ -21,13 +21,26 @@ public class PaymentV1Controller implements PaymentV1ApiSpec {
         @RequestBody PaymentV1Dto.PaymentRequest request
     ) {
         Payment payment;
-        payment = paymentDomainService.createPayment(
-            userId,
-            request.orderId(),
-            request.amount(),
-            request.cardType(),
-            request.cardNo()
-        );
+        try {
+            payment = paymentDomainService.createPayment(
+                    userId,
+                    request.orderId(),
+                    request.amount(),
+                    request.cardType(),
+                    request.cardNo()
+            );
+        } catch (Exception e) {
+            log.error("결제 요청 실패, Fallback 실행 - orderId: {}, error: {}",
+                    request.orderId(), e.getMessage());
+            // Fallback 결제
+            payment = paymentDomainService.createFallbackPayment(
+                    userId,
+                    request.orderId(),
+                    request.amount(),
+                    request.cardType(),
+                    request.cardNo()
+            );
+        }
         return ApiResponse.success(PaymentV1Dto.PaymentResponse.from(payment));
     }
 

@@ -9,7 +9,8 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
+import io.github.resilience4j.retry.annotation.Retry;
 import java.math.BigDecimal;
 
 @Service
@@ -27,6 +28,8 @@ public class PaymentDomainService {
         payment.updateStatus(status, reason);
     }
 
+    @Retry(name = "pgRetry")
+    @CircuitBreaker(name = "pgCircuit")
     @Transactional
     public Payment createPayment(
             String userId,
@@ -60,5 +63,24 @@ public class PaymentDomainService {
             log.error("PG 결제 요청 실패: {}", e.getMessage());
             throw e;
         }
+    }
+
+    @Transactional
+    public Payment createFallbackPayment(String userId,
+                                        String orderId,
+                                        BigDecimal amount,
+                                        String cardType,
+                                        String cardNo) {
+        log.error("PG 서비스 호출 실패로 인해 대체 결제 정보 생성: {}", orderId);
+        Payment payment = Payment.builder()
+            .transactionKey("FALLBACK-" + orderId)
+            .orderId(orderId)
+            .userId(userId)
+            .amount(amount)
+            .status(PaymentStatus.FAILED)
+            .cardType(cardType)
+            .cardNo(cardNo)
+            .build();
+        return paymentRepository.save(payment);
     }
 }

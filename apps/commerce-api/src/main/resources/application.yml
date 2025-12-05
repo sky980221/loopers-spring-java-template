@@ -10,6 +10,16 @@ server:
     keep-alive-timeout: 60s # 60s
   max-http-request-header-size: 8KB
 
+resilience4j:
+  retry:
+    instances:
+      pgRetry:
+        max-attempts: 3
+        wait-duration: 1s
+        retry-exceptions:
+          - feign.RetryableException
+        fail-after-max-attempts: true
+
 spring:
   main:
     web-application-type: servlet
@@ -23,6 +33,7 @@ spring:
       - redis.yml
       - logging.yml
       - monitoring.yml
+      - resilience4j.yml
 pg:
   base-url: http://localhost:8082
 
