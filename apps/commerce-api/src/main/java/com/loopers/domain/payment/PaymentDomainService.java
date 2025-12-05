@@ -2,6 +2,7 @@ package com.loopers.domain.payment;
 
 import com.loopers.infrastructure.pg.PgClient;
 import com.loopers.infrastructure.pg.PgDto;
+import com.loopers.interfaces.api.ApiResponse;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
@@ -43,10 +44,10 @@ public class PaymentDomainService {
             .build();
 
         try {
-            PgDto.Response response = pgClient.requestPayment(userId, request);
+            ApiResponse<PgDto.Response> response = pgClient.requestPayment(userId, request);
 
             Payment payment = Payment.builder()
-                .transactionKey(response.paymentId())
+                .transactionKey(response.data().transactionKey())
                 .orderId(orderId)
                 .userId(userId)
                 .amount(amount)

@@ -15,8 +15,8 @@ public class PgDto {
 
     @Builder
     public record Response(
-            String paymentId,
-            String orderId,
-            String status
+            String transactionKey,
+            String status,
+            String reason
     ) {}
 }
