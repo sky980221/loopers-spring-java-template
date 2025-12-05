@@ -1,7 +1,11 @@
 package com.loopers.infrastructure.pg;
 
+import lombok.Builder;
+
 public class PgDto {
-    public static record Request(
+
+    @Builder
+    public record Request(
             String orderId,
             String cardType,
             String cardNo,
@@ -9,7 +13,8 @@ public class PgDto {
             String callbackUrl
     ) {}
 
-    public static record Response(
+    @Builder
+    public record Response(
             String paymentId,
             String orderId,
             String status
