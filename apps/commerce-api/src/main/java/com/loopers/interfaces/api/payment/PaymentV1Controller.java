@@ -38,7 +38,8 @@ public class PaymentV1Controller implements PaymentV1ApiSpec {
                     request.orderId(),
                     request.amount(),
                     request.cardType(),
-                    request.cardNo()
+                    request.cardNo(),
+                    e
             );
         }
         return ApiResponse.success(PaymentV1Dto.PaymentResponse.from(payment));

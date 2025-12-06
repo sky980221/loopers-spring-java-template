@@ -29,7 +29,7 @@ public class PaymentDomainService {
     }
 
     @Retry(name = "pgRetry")
-    @CircuitBreaker(name = "pgCircuit")
+    @CircuitBreaker(name = "pgCircuit", fallbackMethod = "createFallbackPayment")
     @Transactional
     public Payment createPayment(
             String userId,
@@ -70,7 +70,8 @@ public class PaymentDomainService {
                                         String orderId,
                                         BigDecimal amount,
                                         String cardType,
-                                        String cardNo) {
+                                        String cardNo,
+                                        Throwable t) {
         log.error("PG 서비스 호출 실패로 인해 대체 결제 정보 생성: {}", orderId);
         Payment payment = Payment.builder()
             .transactionKey("FALLBACK-" + orderId)

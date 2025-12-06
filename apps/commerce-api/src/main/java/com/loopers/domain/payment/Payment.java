@@ -98,10 +98,10 @@ public class Payment extends BaseEntity {
     }
 
     public void updateStatus(PaymentStatus status, String failureReason) {
-        if (status == PaymentStatus.SUCCESS) {
-            markAsCompleted();
-        } else if (status == PaymentStatus.FAILED || failureReason != null) {
-            markAsFailed(failureReason) ;
+        switch (status) {
+            case SUCCESS -> markAsCompleted();
+            case FAILED -> markAsFailed(failureReason);
+            case PENDING -> this.status = PaymentStatus.PENDING;
         }
     }
 }
