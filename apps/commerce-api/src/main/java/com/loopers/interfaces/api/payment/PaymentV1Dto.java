@@ -1,13 +1,11 @@
 package com.loopers.interfaces.api.payment;
 
 import com.loopers.domain.payment.Payment;
+import com.loopers.domain.payment.PaymentStatus;
 
 import java.math.BigDecimal;
 
 public class PaymentV1Dto {
-    public enum PaymentStatusDto {
-        PENDING, SUCCESS, FAILED
-    }
 
     public record PaymentRequest(
         String orderId,
@@ -20,7 +18,7 @@ public class PaymentV1Dto {
             String transactionKey,
             String orderId,
             BigDecimal amount,
-            String status,
+            PaymentStatus status,
             String failureReason
     ) {
         public static PaymentResponse from(Payment payment) {
@@ -28,7 +26,7 @@ public class PaymentV1Dto {
                     payment.getTransactionKey(),
                     payment.getOrderId(),
                     payment.getAmount(),
-                    payment.getStatus().name(),
+                    payment.getStatus(),
                     payment.getFailureReason()
             );
         }
@@ -36,7 +34,10 @@ public class PaymentV1Dto {
     public record CallbackRequest(
         String transactionKey,
         String orderId,
-        PaymentStatusDto status,
-        String reason
+        String cardType,
+        String cardNo,
+        Long amount,
+        PaymentStatus status,
+        String failureReason
     ) {}
 }

@@ -1,5 +1,8 @@
-package com.loopers.domain.payment;
+package com.loopers.application.payment;
 
+import com.loopers.domain.payment.Payment;
+import com.loopers.domain.payment.PaymentRepository;
+import com.loopers.domain.payment.PaymentStatus;
 import com.loopers.infrastructure.pg.PgClient;
 import com.loopers.infrastructure.pg.PgDto;
 import com.loopers.interfaces.api.ApiResponse;
@@ -16,7 +19,7 @@ import java.math.BigDecimal;
 @Service
 @RequiredArgsConstructor
 @Slf4j
-public class PaymentDomainService {
+public class PaymentFacade {
     private final PgClient pgClient;
     private final PaymentRepository paymentRepository;
 
@@ -30,7 +33,6 @@ public class PaymentDomainService {
 
     @Retry(name = "pgRetry")
     @CircuitBreaker(name = "pgCircuit", fallbackMethod = "createFallbackPayment")
-    @Transactional
     public Payment createPayment(
             String userId,
             String orderId,
@@ -48,7 +50,6 @@ public class PaymentDomainService {
 
         try {
             ApiResponse<PgDto.Response> response = pgClient.requestPayment(userId, request);
-
             Payment payment = Payment.builder()
                 .transactionKey(response.data().transactionKey())
                 .orderId(orderId)
@@ -58,11 +59,16 @@ public class PaymentDomainService {
                 .cardType(cardType)
                 .cardNo(cardNo)
                 .build();
-            return paymentRepository.save(payment);
+            return savePendingPaymentTx(payment);
         } catch (Exception e) {
             log.error("PG 결제 요청 실패: {}", e.getMessage());
             throw e;
         }
+    }
+
+    @Transactional
+    protected Payment savePendingPaymentTx(Payment payment) {
+        return paymentRepository.save(payment);
     }
 
     @Transactional
