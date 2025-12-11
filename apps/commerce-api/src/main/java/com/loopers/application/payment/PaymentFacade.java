@@ -10,6 +10,7 @@ import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -22,6 +23,8 @@ import java.math.BigDecimal;
 public class PaymentFacade {
     private final PgClient pgClient;
     private final PaymentRepository paymentRepository;
+    @Value("${payment.callback-url}")
+    private String paymentCallbackUrl;
 
     @Transactional
     public void updatePaymentStatus(String transactionKey, String name, String reason) {
@@ -45,7 +48,7 @@ public class PaymentFacade {
             .cardType(cardType)
             .cardNo(cardNo)
             .amount(amount.toString())
-            .callbackUrl("http://localhost:8080/api/v1/payments/callback")
+            .callbackUrl(paymentCallbackUrl)
             .build();
 
         try {
