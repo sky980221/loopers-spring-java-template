@@ -1,7 +1,7 @@
 package com.loopers.interfaces.api.order;
 
 import com.loopers.domain.order.Order;
-import com.loopers.domain.order.OrderDomainService;
+import com.loopers.application.order.OrderFacade;
 import com.loopers.domain.order.OrderItem;
 import com.loopers.domain.order.OrderRepository;
 import com.loopers.interfaces.api.ApiResponse;
@@ -19,7 +19,7 @@ import java.util.stream.Collectors;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/orders")
 public class OrderV1Controller {
-    private final OrderDomainService orderDomainService;
+    private final OrderFacade orderFacade;
     private final OrderRepository orderRepository;
 
     @PostMapping("")
@@ -30,7 +30,7 @@ public class OrderV1Controller {
         List<OrderItem> items = request.items().stream()
             .map(i -> new OrderItem(null, i.productId(), i.quantity(), i.price()))
             .collect(Collectors.toList());
-        Order order = orderDomainService.createOrder(userId, items);
+        Order order = orderFacade.createOrder(userId, items);
         Order saved = orderRepository.save(order);
         return ApiResponse.success(OrderV1Dto.OrderResponse.from(saved));
     }
@@ -39,7 +39,7 @@ public class OrderV1Controller {
     public ApiResponse<OrderV1Dto.OrderListResponse> getOrders(
         @RequestHeader("X-USER-ID") String userId
     ) {
-        List<Order> orders = orderDomainService.getOrdersByUserId(userId);
+        List<Order> orders = orderFacade.getOrdersByUserId(userId);
         List<OrderV1Dto.OrderSummary> items = orders.stream()
             .map(OrderV1Dto.OrderSummary::from)
             .collect(Collectors.toList());
