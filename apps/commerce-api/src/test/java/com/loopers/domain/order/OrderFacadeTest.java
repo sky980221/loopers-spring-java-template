@@ -1,5 +1,6 @@
 package com.loopers.domain.order;
 
+import com.loopers.application.order.OrderFacade;
 import com.loopers.domain.point.Point;
 import com.loopers.domain.point.PointRepository;
 import com.loopers.domain.product.Product;
@@ -23,13 +24,14 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
-class OrderDomainServiceTest {
+class OrderFacadeTest {
 
     @Mock OrderRepository orderRepository;
     @Mock PointRepository pointRepository;
     @Mock ProductRepository productRepository;
 
-    @InjectMocks OrderDomainService service;
+    @InjectMocks
+    OrderFacade service;
 
     private OrderItem item(long productId, int quantity, String unitPrice) {
         return OrderItem.builder()

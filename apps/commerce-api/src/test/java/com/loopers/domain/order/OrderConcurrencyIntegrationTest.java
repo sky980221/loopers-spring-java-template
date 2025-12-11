@@ -1,5 +1,6 @@
 package com.loopers.domain.order;
 
+import com.loopers.application.order.OrderFacade;
 import com.loopers.domain.point.Point;
 import com.loopers.domain.product.Money;
 import com.loopers.domain.product.Product;
@@ -26,7 +27,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 class OrderConcurrencyIntegrationTest {
 
     @Autowired
-    private OrderDomainService orderDomainService;
+    private OrderFacade orderFacade;
     @Autowired
     private PointJpaRepository pointJpaRepository;
     @Autowired
@@ -85,7 +86,7 @@ class OrderConcurrencyIntegrationTest {
             tasks.add(() -> {
                 await(start);
                 OrderItem orderItem = item(productId, quantity, unitPrice);
-                orderDomainService.createOrder(userId, List.of(orderItem));
+                orderFacade.createOrder(userId, List.of(orderItem));
                 done.countDown();
             });
         }
@@ -127,7 +128,7 @@ class OrderConcurrencyIntegrationTest {
                 await(start);
                 OrderItem orderItem = item(productId, quantity, unitPrice);
                 try {
-                    orderDomainService.createOrder(userId, List.of(orderItem));
+                    orderFacade.createOrder(userId, List.of(orderItem));
                 } finally {
                     done.countDown();
                 }
