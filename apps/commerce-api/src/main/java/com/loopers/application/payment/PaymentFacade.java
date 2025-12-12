@@ -11,6 +11,7 @@ import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import io.github.resilience4j.circuitbreaker.annotation.CircuitBreaker;
@@ -23,6 +24,7 @@ import java.math.BigDecimal;
 public class PaymentFacade {
     private final PgClient pgClient;
     private final PaymentRepository paymentRepository;
+    private final ApplicationEventPublisher eventPublisher;
     @Value("${payment.callback-url}")
     private String paymentCallbackUrl;
 
@@ -36,6 +38,7 @@ public class PaymentFacade {
 
     @Retry(name = "pgRetry")
     @CircuitBreaker(name = "pgCircuit", fallbackMethod = "createFallbackPayment")
+    @Transactional
     public Payment createPayment(
             String userId,
             String orderId,
@@ -53,6 +56,7 @@ public class PaymentFacade {
 
         try {
             ApiResponse<PgDto.Response> response = pgClient.requestPayment(userId, request);
+
             Payment payment = Payment.builder()
                 .transactionKey(response.data().transactionKey())
                 .orderId(orderId)
@@ -62,16 +66,11 @@ public class PaymentFacade {
                 .cardType(cardType)
                 .cardNo(cardNo)
                 .build();
-            return savePendingPaymentTx(payment);
+            return paymentRepository.save(payment);
         } catch (Exception e) {
             log.error("PG 결제 요청 실패: {}", e.getMessage());
             throw e;
         }
-    }
-
-    @Transactional
-    protected Payment savePendingPaymentTx(Payment payment) {
-        return paymentRepository.save(payment);
     }
 
     @Transactional

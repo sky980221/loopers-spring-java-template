@@ -9,6 +9,7 @@ import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
+import java.math.BigDecimal;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -28,13 +29,17 @@ public class Order extends BaseEntity {
     @Enumerated(EnumType.STRING)
     private OrderStatus status;
 
+    @Column(name = "final_amount", nullable = false)
+    private BigDecimal finalAmount;
+
     @Builder
-    public Order(String userId, List<OrderItem> orderItems, OrderStatus status) {
+    public Order(String userId, List<OrderItem> orderItems, OrderStatus status, BigDecimal finalAmount) {
         validateUserId(userId);
         validateOrderItems(orderItems);
         this.userId = userId;
         this.orderItems = orderItems;
         this.status = OrderStatus.CREATED;
+        this.finalAmount = finalAmount;
     }
 
     //주문 리스트 유효성 검증
@@ -52,6 +57,6 @@ public class Order extends BaseEntity {
     }
 
     public static Order createOrder(String userId, List<OrderItem> orderItems) {
-        return new Order(userId, orderItems, OrderStatus.CREATED);
+        return new Order(userId, orderItems, OrderStatus.CREATED, BigDecimal.ZERO);
     }
 }
