@@ -3,6 +3,8 @@ package com.loopers.application.payment;
 import com.loopers.domain.payment.Payment;
 import com.loopers.domain.payment.PaymentRepository;
 import com.loopers.domain.payment.PaymentStatus;
+import com.loopers.domain.payment.event.PaymentFailedEvent;
+import com.loopers.domain.payment.event.PaymentSuccessEvent;
 import com.loopers.infrastructure.pg.PgClient;
 import com.loopers.infrastructure.pg.PgDto;
 import com.loopers.interfaces.api.ApiResponse;
@@ -31,10 +33,22 @@ public class PaymentFacade {
     @Transactional
     public void updatePaymentStatus(String transactionKey, String name, String reason) {
         PaymentStatus status = PaymentStatus.valueOf(name);
+
         Payment payment = paymentRepository.findByTransactionKey(transactionKey)
-            .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "결제 정보를 찾을 수 없습니다."));
+                .orElseThrow(() -> new CoreException(ErrorType.NOT_FOUND, "결제 정보를 찾을 수 없습니다."));
+
         payment.updateStatus(status, reason);
+
+        // ---- 이벤트 발행 ----
+        if (status == PaymentStatus.SUCCESS) {
+            PaymentSuccessEvent event = PaymentSuccessEvent.from(payment);
+            eventPublisher.publishEvent(event);
+        } else if (status == PaymentStatus.FAILED) {
+            PaymentFailedEvent event = PaymentFailedEvent.from(payment);
+            eventPublisher.publishEvent(event);
+        }
     }
+
 
     @Retry(name = "pgRetry")
     @CircuitBreaker(name = "pgCircuit", fallbackMethod = "createFallbackPayment")
