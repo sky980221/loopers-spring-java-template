@@ -1,6 +1,5 @@
 package com.loopers.application.order;
 
-import com.loopers.application.payment.PaymentFacade;
 import com.loopers.domain.order.event.OrderCreatedEvent;
 import com.loopers.domain.payment.event.PaymentRequestedEvent;
 import lombok.RequiredArgsConstructor;

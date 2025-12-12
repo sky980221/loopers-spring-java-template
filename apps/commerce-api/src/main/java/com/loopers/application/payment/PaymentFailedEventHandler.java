@@ -16,7 +16,7 @@ public class PaymentFailedEventHandler {
     @TransactionalEventListener
     public void handle(PaymentFailedEvent event) {
         Order order = orderRepository.findById(event.orderId())
-                .orElseThrow();
+                .orElseThrow(() -> new IllegalStateException("Order not found: " + event.orderId()));
 
         order.markedAsCancelled(event.failureReason());
     }

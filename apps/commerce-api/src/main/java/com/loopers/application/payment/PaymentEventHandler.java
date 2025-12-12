@@ -1,5 +1,4 @@
 package com.loopers.application.payment;
-
 import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderRepository;
 import com.loopers.domain.payment.event.PaymentFailedEvent;
@@ -25,46 +24,29 @@ public class PaymentEventHandler {
      */
     @TransactionalEventListener(phase = AFTER_COMMIT)
     @Async("eventTaskExecutor")
-    @Transactional
     public void handlePaymentSuccess(PaymentSuccessEvent event) {
-
-        log.info("결제 성공 이벤트 처리 시작 - orderId: {}, transactionKey: {}",
-                event.orderId(), event.transactionKey());
-
+        log.info("결제 성공 이벤트 처리 시작 - orderId: {}, transactionKey: {}", event.orderId(), event.transactionKey());
         try {
             Order order = orderRepository.findById(event.orderId())
-                    .orElseThrow();
-
+                    .orElseThrow(() -> new IllegalStateException("Order not found: " + event.orderId()));
             order.markAsConfirmed();
             orderRepository.save(order);
-
             log.info("결제 성공 처리 완료 - orderId: {}", event.orderId());
-
         } catch (Exception e) {
-            log.error("결제 성공 후속 처리 실패 - orderId: {}, error: {}",
-                    event.orderId(), e.getMessage(), e);
+            log.error("결제 성공 후속 처리 실패 - orderId: {}, error: {}", event.orderId(), e.getMessage(), e);
         }
     }
 
-    /**
-     * 결제 실패 이벤트 처리
-     */
     @TransactionalEventListener(phase = AFTER_COMMIT)
-    @Async("eventTaskExecutor")
+    @Async
     @Transactional
     public void handlePaymentFailed(PaymentFailedEvent event) {
-
-        log.info("결제 실패 이벤트 처리 시작 - orderId: {}, reason: {}",
-                event.orderId(), event.failureReason());
-
+        log.info("결제 실패 이벤트 처리 시작 - orderId: {}, reason: {}", event.orderId(), event.failureReason());
         try {
             Order order = orderRepository.findById(event.orderId())
-                    .orElseThrow();
-
-            // 주문 상태를 PAYMENT_FAILED 로 변경
+                    .orElseThrow(() -> new IllegalStateException("Order not found: " + event.orderId()));
             order.markedAsCancelled(event.failureReason());
             orderRepository.save(order);
-
             log.info("결제 실패 처리 완료 - orderId: {}", event.orderId());
 
         } catch (Exception e) {
