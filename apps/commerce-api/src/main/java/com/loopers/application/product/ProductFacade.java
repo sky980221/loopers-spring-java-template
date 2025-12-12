@@ -3,7 +3,10 @@ package com.loopers.application.product;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JavaType;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.loopers.domain.product.event.ProductDetailEvent;
+import com.loopers.domain.product.event.ProductListEvent;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 import com.loopers.domain.product.ProductSearchCondition;
@@ -30,9 +33,16 @@ public class ProductFacade {
     private final ObjectMapper objectMapper;
     @Qualifier("jsonRedisTemplate")
     private final RedisTemplate<String, Object> jsonRedisTemplate;
+    private final ApplicationEventPublisher eventPublisher;
+
 
     public List<ProductListItem> getProductList(ProductSearchCondition condition) {
         String key = buildKey("productList", condition.cacheKey());
+
+        // 0. 이벤트 발행
+        eventPublisher.publishEvent(
+                new ProductListEvent(condition.cacheKey())
+        );
 
         // 1. Redis에서 먼저 조회
         String cached = redisTemplate.opsForValue().get(key);
@@ -72,6 +82,11 @@ public class ProductFacade {
 
     @Transactional(readOnly = true)
     public ProductInfo getProductDetail(Long productId) {
+
+        //이벤트 발행
+        eventPublisher.publishEvent(
+                new ProductDetailEvent(productId)
+        );
         String key = "product:detail:" + productId;
         // 1. Redis에서 먼저 조회
         Object cached = jsonRedisTemplate.opsForValue().get(key);

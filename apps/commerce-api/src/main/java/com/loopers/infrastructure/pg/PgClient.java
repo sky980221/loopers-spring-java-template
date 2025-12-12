@@ -1,5 +1,6 @@
 package com.loopers.infrastructure.pg;
 
+import com.loopers.interfaces.api.ApiResponse;
 import org.springframework.cloud.openfeign.FeignClient;
 import org.springframework.web.bind.annotation.*;
 
@@ -7,7 +8,7 @@ import org.springframework.web.bind.annotation.*;
 public interface PgClient {
 
     @PostMapping("/api/v1/payments")
-    PgDto.Response requestPayment(@RequestHeader("X-USER-ID") String userId,
+    ApiResponse<PgDto.Response> requestPayment(@RequestHeader("X-USER-ID") String userId,
                                   @RequestBody PgDto.Request request);
 
     @GetMapping("/api/v1/payments")
