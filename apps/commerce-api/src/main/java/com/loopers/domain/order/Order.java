@@ -59,4 +59,12 @@ public class Order extends BaseEntity {
     public static Order createOrder(String userId, List<OrderItem> orderItems) {
         return new Order(userId, orderItems, OrderStatus.CREATED, BigDecimal.ZERO);
     }
+
+    public void markAsConfirmed() {
+        this.status = OrderStatus.CONFIRMED;
+    }
+
+    public void markedAsCancelled(String s) {
+        this.status = OrderStatus.CANCELLED;
+    }
 }
