@@ -5,7 +5,9 @@ import org.springframework.dao.DataIntegrityViolationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
+import org.springframework.context.ApplicationEventPublisher;
+import com.loopers.domain.like.event.LikeCreatedEvent;
+import com.loopers.domain.like.event.LikeDeletedEvent;
 import java.util.List;
 
 @Service
@@ -13,6 +15,7 @@ import java.util.List;
 public class LikeService {
     private final LikeRepository likeRepository;
     private final ProductRepository productRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     //상품 좋아요
     @Transactional
@@ -24,23 +27,28 @@ public class LikeService {
         }
 
         try {
+            // 2) 좋아요 기록 저장
             likeRepository.save(new Like(userId, productId));
-            product.increaseLikeCount();
-            productRepository.save(product);
+
+            // 3) 집계는 이벤트로 처리
+            eventPublisher.publishEvent(new LikeCreatedEvent(userId, productId));
+
         } catch (DataIntegrityViolationException ignored) {
+            // 중복 좋아요 race condition 대응
         }
     }
 
     @Transactional
-    public void cancleLikeProduct(String useId, Long productId){
+    public void cancleLikeProduct(String userId, Long productId){
         Product product = productRepository.findByIdForUpdate(productId)
                 .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 상품입니다."));
 
-        likeRepository.findByUserIdAndProductId(useId, productId)
+        likeRepository.findByUserIdAndProductId(userId, productId)
                 .ifPresent(like -> {
                     likeRepository.delete(like);
-                    product.decreaseLikeCount();
-                    productRepository.save(product);
+
+                    // 집계는 이벤트로 처리
+                    eventPublisher.publishEvent(new LikeDeletedEvent(userId, productId));
                 });
 
     }
