@@ -5,6 +5,11 @@ import java.math.BigDecimal;
 @Component
 public class DataPlatform {
 
+    public boolean sendOrderCreated(String orderId, String userId, BigDecimal bigDecimal) {
+        System.out.println("데이터플랫폼: 주문 생성 전송");
+        return true;
+    }
+
     public boolean sendPaymentSuccess(String orderId, BigDecimal amount) {
         System.out.println("데이터플랫폼: 결제 성공 전송");
         return true;

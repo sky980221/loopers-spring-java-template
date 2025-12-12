@@ -33,7 +33,7 @@ public class Order extends BaseEntity {
     private BigDecimal finalAmount;
 
     @Builder
-    public Order(String userId, List<OrderItem> orderItems, OrderStatus status, BigDecimal finalAmount) {
+    public Order(String userId, List<OrderItem> orderItems, BigDecimal finalAmount) {
         validateUserId(userId);
         validateOrderItems(orderItems);
         this.userId = userId;
@@ -57,7 +57,7 @@ public class Order extends BaseEntity {
     }
 
     public static Order createOrder(String userId, List<OrderItem> orderItems) {
-        return new Order(userId, orderItems, OrderStatus.CREATED, BigDecimal.ZERO);
+        return new Order(userId, orderItems, BigDecimal.ZERO);
     }
 
     public void markAsConfirmed() {
@@ -66,5 +66,9 @@ public class Order extends BaseEntity {
 
     public void markedAsCancelled(String s) {
         this.status = OrderStatus.CANCELLED;
+    }
+
+    public Object getTotalAmount() {
+        return null;
     }
 }

@@ -1,6 +1,7 @@
 package com.loopers.application.dataplatform;
 
 import com.loopers.domain.dataplatform.DataPlatform;
+import com.loopers.domain.order.event.OrderCreatedEvent;
 import com.loopers.domain.payment.event.PaymentFailedEvent;
 import com.loopers.domain.payment.event.PaymentSuccessEvent;
 import lombok.RequiredArgsConstructor;
@@ -30,5 +31,16 @@ public class DataPlatformEventHandler {
     public void handlePaymentFailed(PaymentFailedEvent event) {
         log.info("데이터플랫폼 전송 - 결제 실패 orderId={}", event.orderId());
         dataPlatform.sendPaymentFailed(String.valueOf(event.orderId()), event.failureReason());
+    }
+
+    @Async("eventTaskExecutor")
+    @TransactionalEventListener(phase = AFTER_COMMIT)
+    public void handleOrderCreated(OrderCreatedEvent event) {
+        log.info("데이터플랫폼 전송 - 주문 생성 orderId={}", event.orderId());
+        dataPlatform.sendOrderCreated(
+                event.orderId(),
+                event.userId(),
+                event.finalAmount()
+        );
     }
 }

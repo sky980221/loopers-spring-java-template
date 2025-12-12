@@ -19,4 +19,17 @@ public class PgDto {
             String status,
             String reason
     ) {}
+
+    @Builder
+    public record Transaction(
+            String transactionKey,
+            String status,
+            String reason
+    ) {}
+
+    @Builder
+    public record OrderResponse(
+            String orderId,
+            java.util.List<Transaction> transactions
+    ) {}
 }
