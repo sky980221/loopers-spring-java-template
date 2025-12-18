@@ -9,7 +9,7 @@ public interface PgClient {
 
     @PostMapping("/api/v1/payments")
     ApiResponse<PgDto.Response> requestPayment(@RequestHeader("X-USER-ID") String userId,
-                                               @RequestBody PgDto.Request request);
+                                  @RequestBody PgDto.Request request);
 
     @GetMapping("/api/v1/payments")
     PgDto.Response findByOrderId(@RequestHeader("X-USER-ID") String userId,

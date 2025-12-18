@@ -31,8 +31,7 @@ public class OrderV1Controller {
             .map(i -> new OrderItem(null, i.productId(), i.quantity(), i.price()))
             .collect(Collectors.toList());
         Order order = orderFacade.createOrder(userId, items);
-        Order saved = orderRepository.save(order);
-        return ApiResponse.success(OrderV1Dto.OrderResponse.from(saved));
+        return ApiResponse.success(OrderV1Dto.OrderResponse.from(order));
     }
 
     @GetMapping("")
