@@ -2,7 +2,7 @@ package com.loopers.application.kafka;
 
 import java.util.concurrent.CompletableFuture;
 
-import com.loopers.domain.outbox.OutboxEvent;
+import com.loopers.domain.outbox.EventOutbox;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -25,9 +25,9 @@ public class EventKafkaProducer {
     /**
      * Outbox 이벤트를 Kafka로 발행
      */
-    public CompletableFuture<SendResult<Object, Object>> publish(OutboxEvent outbox) {
+    public CompletableFuture<SendResult<Object, Object>> publish(EventOutbox outbox) {
         String topic = getTopicByAggregateType(outbox.getAggregateType());
-        String partitionKey = outbox.getAggregateId();
+        String partitionKey = outbox.getEventKey();
 
         log.info("Kafka 발행 시작 - topic: {}, key: {}, eventType: {}",
                 topic, partitionKey, outbox.getEventType());

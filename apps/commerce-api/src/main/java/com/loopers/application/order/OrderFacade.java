@@ -3,29 +3,34 @@ package com.loopers.application.order;
 import com.loopers.domain.order.Order;
 import com.loopers.domain.order.OrderItem;
 import com.loopers.domain.order.OrderRepository;
+import com.loopers.application.outbox.OutboxEventService;
 import com.loopers.domain.point.Point;
 import com.loopers.domain.point.PointRepository;
 import com.loopers.domain.product.Product;
 import com.loopers.domain.product.ProductRepository;
-import com.loopers.application.payment.PaymentFacade;
 import com.loopers.support.error.CoreException;
 import com.loopers.support.error.ErrorType;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import jakarta.persistence.OptimisticLockException;
-
+import com.loopers.domain.order.event.OrderCreatedEvent;
 import java.math.BigDecimal;
 import java.util.List;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class OrderFacade {
     private final OrderRepository orderRepository;
     private final PointRepository pointRepository;
     private final ProductRepository productRepository;
-    private final PaymentFacade paymentFacade;
+    private final ApplicationEventPublisher eventPublisher;
+    private final OutboxEventService outboxService;
+
 
     @Transactional
     public Order createOrder(String userId, List<OrderItem> orderItems){
@@ -80,8 +85,26 @@ public class OrderFacade {
         point.usePoints(totalAmount);
         pointRepository.save(point);
 
-        //5. 주문 생성
-        return Order.createOrder(userId, orderItems);
+
+        // 5. 주문 생성
+        Order order = Order.createOrder(userId, orderItems);
+        orderRepository.save(order);
+
+        // 6. 주문 생성 이벤트 발행
+        OrderCreatedEvent event = OrderCreatedEvent.from(order);
+        eventPublisher.publishEvent(event);
+        log.info("주문 생성 이벤트 발행: {}", order.getId());
+
+        // 7. Outbox 저장
+        outboxService.saveEvent(
+                "ORDER",            // aggregateType
+                order.getId().toString(),        // aggregateId
+                "OrderCreatedEvent",             // eventType
+                order.getId().toString(),        // eventKey (partition key)
+                event                            // payload
+        );
+
+        return order;
     }
 
     @Transactional(readOnly = true)

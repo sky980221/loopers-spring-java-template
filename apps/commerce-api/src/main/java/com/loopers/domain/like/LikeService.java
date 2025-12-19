@@ -5,9 +5,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.context.ApplicationEventPublisher;
-import com.loopers.domain.like.event.LikeCreatedEvent;
-import com.loopers.domain.like.event.LikeDeletedEvent;
+import com.loopers.application.outbox.OutboxEventService;
 import java.util.List;
 
 @Service
@@ -15,7 +13,7 @@ import java.util.List;
 public class LikeService {
     private final LikeRepository likeRepository;
     private final ProductRepository productRepository;
-    private final ApplicationEventPublisher eventPublisher;
+    private final OutboxEventService outboxEventService;
 
     //상품 좋아요
     @Transactional
@@ -30,8 +28,14 @@ public class LikeService {
             // 2) 좋아요 기록 저장
             likeRepository.save(new Like(userId, productId));
 
-            // 3) 집계는 이벤트로 처리
-            eventPublisher.publishEvent(new LikeCreatedEvent(userId, productId));
+            // 3) Outbox 기록
+            outboxEventService.saveEvent(
+                "LIKE",
+                String.valueOf(productId),
+                "LIKE_CREATED",
+                String.valueOf(productId),
+                new LikePayload(userId, productId)
+            );
 
         } catch (DataIntegrityViolationException ignored) {
             // 중복 좋아요 race condition 대응
@@ -47,8 +51,14 @@ public class LikeService {
                 .ifPresent(like -> {
                     likeRepository.delete(like);
 
-                    // 집계는 이벤트로 처리
-                    eventPublisher.publishEvent(new LikeDeletedEvent(userId, productId));
+                    // Outbox 기록
+                    outboxEventService.saveEvent(
+                        "LIKE",
+                        String.valueOf(productId),
+                        "LIKE_DELETED",
+                        String.valueOf(productId),
+                        new LikePayload(userId, productId)
+                    );
                 });
 
     }
@@ -57,4 +67,6 @@ public class LikeService {
     public List<Like> getUserLikeProduct(String userId){
         return likeRepository.findAllByUserId(userId);
     }
+
+    private record LikePayload(String userId, Long productId) {}
 }
