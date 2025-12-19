@@ -3,6 +3,7 @@ package com.loopers.interfaces.consumer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loopers.application.EventHandledService;
 import com.loopers.application.ProductMetricsService;
+import com.loopers.application.ProductCacheService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
@@ -21,6 +22,7 @@ public class OrderEventConsumer {
     private final ObjectMapper objectMapper;
     private final EventHandledService eventHandledService;
     private final ProductMetricsService productMetricsService;
+    private final ProductCacheService productCacheService;
 
     @KafkaListener(
             topics = "${kafka.topics.order-events}",
@@ -60,6 +62,9 @@ public class OrderEventConsumer {
 
         LocalDateTime occurredAt =
                 LocalDateTime.parse(event.get("occurredAt").toString());
+
+        // 재고 변경으로 인한 캐시 무효화
+        productCacheService.invalidateAfterStockChange(productId);
 
         log.info(
                 "Order 이벤트 처리 완료 - eventId={}, productId={}, quantity={}, amount={}",

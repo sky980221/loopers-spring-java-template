@@ -9,6 +9,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.kafka.core.KafkaTemplate;
 import org.springframework.kafka.support.SendResult;
 import org.springframework.stereotype.Component;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import java.util.Map;
 
 @Slf4j
 @Component
@@ -16,6 +18,7 @@ import org.springframework.stereotype.Component;
 public class EventKafkaProducer {
 
     private final KafkaTemplate<Object, Object> kafkaTemplate;
+    private final ObjectMapper objectMapper;
 
     @Value("${kafka.topics.catalog-events}")
     private String catalogEventsTopic;
@@ -32,7 +35,24 @@ public class EventKafkaProducer {
         log.info("Kafka 발행 시작 - topic: {}, key: {}, eventType: {}",
                 topic, partitionKey, outbox.getEventType());
 
-        return kafkaTemplate.send(topic, partitionKey, outbox.getPayload())
+        String envelope;
+        try {
+            // payload는 JSON 문자열이므로 Map으로 역직렬화 후, envelope에 객체로 포함
+            Object payloadObject = objectMapper.readValue(outbox.getPayload(), Object.class);
+            Map<String, Object> eventEnvelope = Map.of(
+                    "id", outbox.getId(),
+                    "aggregateType", outbox.getAggregateType(),
+                    "aggregateId", outbox.getAggregateId(),
+                    "eventType", outbox.getEventType(),
+                    "occurredAt", outbox.getCreatedAt().toString(),
+                    "payload", payloadObject
+            );
+            envelope = objectMapper.writeValueAsString(eventEnvelope);
+        } catch (Exception e) {
+            throw new RuntimeException("이벤트 엔벨롭 생성 실패", e);
+        }
+
+        return kafkaTemplate.send(topic, partitionKey, envelope)
                 .thenApply(result -> {
                     log.info("Kafka 발행 성공 - topic: {}, partition: {}, offset: {}, eventId: {}",
                             topic,

@@ -4,6 +4,7 @@ package com.loopers.interfaces.consumer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loopers.application.EventHandledService;
 import com.loopers.application.ProductMetricsService;
+import com.loopers.application.ProductCacheService;
 import com.loopers.interfaces.consumer.OrderEventConsumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.BeforeEach;
@@ -33,6 +34,9 @@ class OrderEventConsumerTest {
     @Mock
     private ProductMetricsService productMetricsService;
 
+    @Mock
+    private ProductCacheService productCacheService;
+
     private ObjectMapper objectMapper;
 
     @BeforeEach
@@ -41,7 +45,8 @@ class OrderEventConsumerTest {
         consumer = new OrderEventConsumer(
                 objectMapper,
                 eventHandledService,
-                productMetricsService
+                productMetricsService,
+                productCacheService
         );
     }
 
@@ -81,6 +86,7 @@ class OrderEventConsumerTest {
         // then
         verify(eventHandledService, times(3)).tryMarkHandled(eventId, eventType);
         verifyNoInteractions(productMetricsService);
+        verify(productCacheService, times(1)).invalidateAfterStockChange(1L);
     }
 
     @Test
@@ -114,6 +120,7 @@ class OrderEventConsumerTest {
         // then
         verify(eventHandledService, times(1)).tryMarkHandled(eventId, eventType);
         verifyNoInteractions(productMetricsService);
+        verifyNoInteractions(productCacheService);
     }
 }
 
