@@ -2,7 +2,7 @@ package com.loopers.interfaces.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loopers.application.EventHandledService;
-import com.loopers.application.ProductMetricsService;
+import com.loopers.application.metrics.ProductMetricsService;
 import com.loopers.application.ProductCacheService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -30,8 +30,7 @@ public class OrderEventConsumer {
     )
     public void consume(ConsumerRecord<String, String> record) throws Exception {
 
-        Map<String, Object> event =
-                objectMapper.readValue(record.value(), Map.class);
+        Map<String, Object> event = objectMapper.readValue(record.value(), Map.class);
 
         String eventId = (String) event.get("id");
         String eventType = (String) event.get("eventType");
@@ -47,29 +46,28 @@ public class OrderEventConsumer {
             return;
         }
 
-        Map<String, Object> payload =
-                (Map<String, Object>) event.get("payload");
+        Map<String, Object> payload = (Map<String, Object>) event.get("payload");
 
         if (payload == null) {
             log.warn("payload 없음 - eventId={}", eventId);
             return;
         }
 
-        Long productId = Long.valueOf(payload.get("productId").toString());
-        Integer quantity = Integer.valueOf(payload.get("quantity").toString());
-        BigDecimal amount =
-                new BigDecimal(payload.get("totalAmount").toString());
+        // 이벤트 타입별 처리
+        if ("ORDER_ITEM_METRIC".equals(eventType)) {
+            Long productId = Long.valueOf(payload.get("productId").toString());
+            Integer quantity = Integer.valueOf(payload.get("quantity").toString());
+            BigDecimal amount = new BigDecimal(payload.get("totalAmount").toString());
+            productMetricsService.incrementOrderMetrics(productId, quantity, amount);
+            log.info("ORDER_ITEM_METRIC 처리 완료 - productId={}, quantity={}, amount={}", productId, quantity, amount);
+            return;
+        }
 
         LocalDateTime occurredAt =
                 LocalDateTime.parse(event.get("occurredAt").toString());
 
-        // 재고 변경으로 인한 캐시 무효화
-        productCacheService.invalidateAfterStockChange(productId);
-
-        log.info(
-                "Order 이벤트 처리 완료 - eventId={}, productId={}, quantity={}, amount={}",
-                eventId, productId, quantity, amount
-        );
+        // 기타 타입은 기존 재고/캐시 무효화 로직 등 필요 시 확장
+        log.debug("처리 대상 아님 - eventType={}, eventId={}", eventType, eventId);
 
     }
 }

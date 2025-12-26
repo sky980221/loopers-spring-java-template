@@ -1,7 +1,7 @@
 package com.loopers.interfaces.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.loopers.application.ProductMetricsService;
+import com.loopers.application.metrics.ProductMetricsService;
 import com.loopers.application.EventHandledService;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.BeforeEach;

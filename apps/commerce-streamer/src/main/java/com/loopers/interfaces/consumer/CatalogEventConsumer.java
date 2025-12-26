@@ -1,7 +1,7 @@
 package com.loopers.interfaces.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.loopers.application.ProductMetricsService;
+import com.loopers.application.metrics.ProductMetricsService;
 import com.loopers.application.EventHandledService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -51,6 +51,10 @@ public class CatalogEventConsumer {
             case "LIKE_DELETED" -> {
                 productMetricsService.decrementLikeCount(productId);
                 log.info("LIKE_DELETED 처리 완료 - productId={}", productId);
+            }
+            case "PRODUCT_VIEWED" -> {
+                productMetricsService.incrementViewCount(productId);
+                log.info("PRODUCT_VIEWED 처리 완료 - productId={}", productId);
             }
             default -> log.debug("처리 대상 아님 - eventType={}", eventType);
         }
