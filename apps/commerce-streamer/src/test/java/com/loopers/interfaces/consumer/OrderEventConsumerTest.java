@@ -3,8 +3,7 @@ package com.loopers.interfaces.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loopers.application.EventHandledService;
-import com.loopers.application.ProductMetricsService;
-import com.loopers.application.ProductCacheService;
+import com.loopers.application.metrics.MetricsAggregator;
 import com.loopers.interfaces.consumer.OrderEventConsumer;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.BeforeEach;
@@ -15,6 +14,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
 import static org.mockito.Mockito.times;
@@ -32,10 +32,7 @@ class OrderEventConsumerTest {
     private EventHandledService eventHandledService;
 
     @Mock
-    private ProductMetricsService productMetricsService;
-
-    @Mock
-    private ProductCacheService productCacheService;
+    private MetricsAggregator metricsAggregator;
 
     private ObjectMapper objectMapper;
 
@@ -45,8 +42,7 @@ class OrderEventConsumerTest {
         consumer = new OrderEventConsumer(
                 objectMapper,
                 eventHandledService,
-                productMetricsService,
-                productCacheService
+                metricsAggregator
         );
     }
 
@@ -54,7 +50,7 @@ class OrderEventConsumerTest {
     void 동일한_이벤트를_여러번_넣어도_한번만_처리된다() throws Exception {
         // given
         String eventId = "event-123";
-        String eventType = "ORDER_CREATED";
+        String eventType = "ORDER_ITEM_METRIC";
 
         Map<String, Object> event = Map.of(
                 "id", eventId,
@@ -79,21 +75,18 @@ class OrderEventConsumerTest {
                 .thenReturn(false);
 
         // when
-        consumer.consume(record);
-        consumer.consume(record);
-        consumer.consume(record);
+        consumer.consume(List.of(record, record, record));
 
         // then
         verify(eventHandledService, times(3)).tryMarkHandled(eventId, eventType);
-        verifyNoInteractions(productMetricsService);
-        verify(productCacheService, times(1)).invalidateAfterStockChange(1L);
+        verify(metricsAggregator, times(1)).aggregate(org.mockito.ArgumentMatchers.anyList());
     }
 
     @Test
     void 이미_처리된_이벤트는_즉시_skip된다() throws Exception {
         // given
         String eventId = "event-456";
-        String eventType = "ORDER_CREATED";
+        String eventType = "ORDER_ITEM_METRIC";
 
         Map<String, Object> event = Map.of(
                 "id", eventId,
@@ -115,12 +108,11 @@ class OrderEventConsumerTest {
                 .thenReturn(false);
 
         // when
-        consumer.consume(record);
+        consumer.consume(List.of(record));
 
         // then
         verify(eventHandledService, times(1)).tryMarkHandled(eventId, eventType);
-        verifyNoInteractions(productMetricsService);
-        verifyNoInteractions(productCacheService);
+        verifyNoInteractions(metricsAggregator);
     }
 }
 

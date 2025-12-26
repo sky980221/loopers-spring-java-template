@@ -24,6 +24,15 @@ spring:
       - kafka.yml
       - logging.yml
       - monitoring.yml
+ranking:
+  prefix: ranking:all
+  ttl-days: 14
+  kafka:
+    listener:
+      type: batch
+      ack-mode: batch
+      concurrency: 3
+      poll-timeout: 1500
 
 kafka:
   topics:
