@@ -2,6 +2,7 @@ package com.loopers.interfaces.consumer;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loopers.application.metrics.MetricsAggregator;
+import com.loopers.application.ranking.RankingAggregator;
 import com.loopers.application.EventHandledService;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.BeforeEach;
@@ -31,6 +32,9 @@ class CatalogEventConsumerTest {
     @Mock
     private EventHandledService eventHandledService;
 
+    @Mock
+    private RankingAggregator rankingAggregator;
+
     private ObjectMapper objectMapper;
 
     @BeforeEach
@@ -39,7 +43,8 @@ class CatalogEventConsumerTest {
         consumer = new CatalogEventConsumer(
                 objectMapper,
                 eventHandledService,
-                metricsAggregator
+                metricsAggregator,
+                rankingAggregator
         );
     }
 
@@ -65,6 +70,7 @@ class CatalogEventConsumerTest {
         consumer.consume(List.of(record));
 
         verify(metricsAggregator, times(1)).aggregate(org.mockito.ArgumentMatchers.anyList());
+        verify(rankingAggregator, times(1)).aggregate(org.mockito.ArgumentMatchers.anyList());
     }
 
     @Test
@@ -89,6 +95,7 @@ class CatalogEventConsumerTest {
         consumer.consume(List.of(record));
 
         verify(metricsAggregator, times(1)).aggregate(org.mockito.ArgumentMatchers.anyList());
+        verify(rankingAggregator, times(1)).aggregate(org.mockito.ArgumentMatchers.anyList());
     }
 
     @Test
@@ -116,6 +123,8 @@ class CatalogEventConsumerTest {
 
         verify(metricsAggregator, times(1)).aggregate(org.mockito.ArgumentMatchers.anyList());
         verifyNoMoreInteractions(metricsAggregator);
+        verify(rankingAggregator, times(1)).aggregate(org.mockito.ArgumentMatchers.anyList());
+        verifyNoMoreInteractions(rankingAggregator);
     }
 }
 

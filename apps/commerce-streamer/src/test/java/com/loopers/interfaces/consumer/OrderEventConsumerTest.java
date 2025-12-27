@@ -4,7 +4,7 @@ package com.loopers.interfaces.consumer;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.loopers.application.EventHandledService;
 import com.loopers.application.metrics.MetricsAggregator;
-import com.loopers.interfaces.consumer.OrderEventConsumer;
+import com.loopers.application.ranking.RankingAggregator;
 import org.apache.kafka.clients.consumer.ConsumerRecord;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -34,6 +34,9 @@ class OrderEventConsumerTest {
     @Mock
     private MetricsAggregator metricsAggregator;
 
+    @Mock
+    private RankingAggregator rankingAggregator;
+
     private ObjectMapper objectMapper;
 
     @BeforeEach
@@ -42,7 +45,8 @@ class OrderEventConsumerTest {
         consumer = new OrderEventConsumer(
                 objectMapper,
                 eventHandledService,
-                metricsAggregator
+                metricsAggregator,
+                rankingAggregator
         );
     }
 
@@ -80,6 +84,7 @@ class OrderEventConsumerTest {
         // then
         verify(eventHandledService, times(3)).tryMarkHandled(eventId, eventType);
         verify(metricsAggregator, times(1)).aggregate(org.mockito.ArgumentMatchers.anyList());
+        verify(rankingAggregator, times(1)).aggregate(org.mockito.ArgumentMatchers.anyList());
     }
 
     @Test
@@ -113,6 +118,7 @@ class OrderEventConsumerTest {
         // then
         verify(eventHandledService, times(1)).tryMarkHandled(eventId, eventType);
         verifyNoInteractions(metricsAggregator);
+        verifyNoInteractions(rankingAggregator);
     }
 }
 
