@@ -1,39 +1,42 @@
-# Loopers Template (Spring + Java)
-Loopers 에서 제공하는 스프링 자바 템플릿 프로젝트입니다.
+# Commerce Ranking Platform
 
-## Getting Started
-현재 프로젝트 안정성 및 유지보수성 등을 위해 아래와 같은 장치를 운용하고 있습니다. 이에 아래 명령어를 통해 프로젝트의 기반을 설치해주세요.
-### Environment
-`local` 프로필로 동작할 수 있도록, 필요 인프라를 `docker-compose` 로 제공합니다.
-```shell
-docker-compose -f ./docker/infra-compose.yml up
-```
-### Monitoring
-`local` 환경에서 모니터링을 할 수 있도록, `docker-compose` 를 통해 `prometheus` 와 `grafana` 를 제공합니다.
+Redis + Kafka 기반의 **커머스 상품 랭킹 집계 플랫폼**입니다.  
+대규모 이벤트 트래픽 환경에서도 **정확하고 안정적인 Top-N 랭킹 제공**을 목표로 합니다.
 
-애플리케이션 실행 이후, **http://localhost:3000** 로 접속해, admin/admin 계정으로 로그인하여 확인하실 수 있습니다.
-```shell
-docker-compose -f ./docker/monitoring-compose.yml up
-```
+이 프로젝트는 단순 랭킹 기능 구현을 넘어,
 
-## About Multi-Module Project
-본 프로젝트는 멀티 모듈 프로젝트로 구성되어 있습니다. 각 모듈의 위계 및 역할을 분명히 하고, 아래와 같은 규칙을 적용합니다.
+- 이벤트 발행 신뢰성 (Transactional Outbox)
+- Consumer 멱등 처리
+- Batch 기반 MV(Materialized View) 갱신
 
-- apps : 각 모듈은 실행가능한 **SpringBootApplication** 을 의미합니다.
-- modules : 특정 구현이나 도메인에 의존적이지 않고, reusable 한 configuration 을 원칙으로 합니다.
-- supports : logging, monitoring 과 같이 부가적인 기능을 지원하는 add-on 모듈입니다.
+까지 포함한 **실전형 이벤트 기반 아키텍처**를 다룹니다.
 
-```
-Root
-├── apps ( spring-applications )
-│   ├── 📦 commerce-api
-│   └── 📦 commerce-streamer
-├── modules ( reusable-configurations )
-│   ├── 📦 jpa
-│   ├── 📦 redis
-│   └── 📦 kafka
-└── supports ( add-ons )
-    ├── 📦 jackson
-    ├── 📦 monitoring
-    └── 📦 logging
-```
+---
+
+##  Key Features
+
+- **Redis Sorted Set(ZSET)** 기반 실시간 Top-N 상품 랭킹 제공  
+- **Kafka 이벤트 스트리밍** 기반 랭킹 집계 파이프라인 구축  
+- **Transactional Outbox Pattern** 적용으로 이벤트 발행 안정성 확보  
+- **Consumer 멱등 처리**로 중복 이벤트 및 재처리 상황 대응  
+- **Spring Batch 기반 MV 갱신**으로 조회 성능 최적화  
+
+---
+
+##  Architecture Overview
+
+```mermaid
+sequenceDiagram
+  autonumber
+  participant API as Commerce API
+  participant DB as RDBMS (Orders + Outbox)
+  participant Outbox as Outbox Table
+  participant Kafka as Kafka Broker
+  participant Consumer as Ranking Consumer
+  participant Redis as Redis Ranking (ZSET)
+
+  API->>DB: 주문/상품 이벤트 저장
+  API->>Outbox: Outbox 이벤트 기록
+  Outbox->>Kafka: 이벤트 발행
+  Kafka->>Consumer: 이벤트 소비
+  Consumer->>Redis: 랭킹 집계 업데이트
